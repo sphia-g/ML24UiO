@@ -1,68 +1,111 @@
-
-##notes to self -- -tror at bootstrap funker slik at man skal evaluere metodene sine
-## altså skal jeg dele opp dataen i mange mindre sett, og 
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linear_model import LinearRegression, Ridge, Lasso
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.utils import resample
+from sklearn.linear_model import Lasso
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 
-np.random.seed(2018)
+# Define the Franke function
+def FrankeFunction(x, y):
+    term1 = 0.75 * np.exp(-(0.25 * (9*x - 2)**2) - 0.25 * ((9*y - 2)**2))
+    term2 = 0.75 * np.exp(-((9*x + 1)**2) / 49.0 - 0.1 * (9*y + 1))
+    term3 = 0.5 * np.exp(-(9*x - 7)**2 / 4.0 - 0.25 * ((9*y - 3)**2))
+    term4 = -0.2 * np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
+    return term1 + term2 + term3 + term4
 
-n = 500
-n_boostraps = 100
-degree = 18  # A quite high value, just to show.
-noise = 0.1
-
-# Make data set.
+# Generate data points
 x = np.arange(0, 1, 0.01)
 y = np.arange(0, 1, 0.01)
+x, y = np.meshgrid(x, y)
 
-##x = np.linspace(-1, 3, n).reshape(-1, 1)
-##y = np.exp(-x**2) + 1.5 * np.exp(-(x-2)**2) + np.random.normal(0, 0.1, x.shape)
+# Flatten x and y to create a design matrix
+x_flat = x.flatten()
+y_flat = y.flatten()
 
-# Hold out some test data that is never used in training.
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+# Compute Franke function and add noise
+z = FrankeFunction(x, y)
+np.random.seed(42)
+noise = np.random.normal(0, 1, z.shape)
+z_noisy = z + noise
+z_noisy_flat = z_noisy.flatten()
 
-# Combine x transformation and model into one operation.
-# Not neccesary, but convenient.
-model = make_pipeline(PolynomialFeatures(degree=degree), LinearRegression(fit_intercept=False))
+# Standardize the data
+scaler_x = StandardScaler()
+scaler_y = StandardScaler()
 
-# The following (m x n_bootstraps) matrix holds the column vectors y_pred
-# for each bootstrap iteration.
-y_pred = np.empty((y_test.shape[0], n_boostraps))
-for i in range(n_boostraps):
-    x_, y_ = resample(x_train, y_train)
+x_scaled = scaler_x.fit_transform(x_flat.reshape(-1, 1))
+y_scaled = scaler_y.fit_transform(y_flat.reshape(-1, 1))
 
-    # Evaluate the new model on the same test data each time.
-    y_pred[:, i] = model.fit(x_, y_).predict(x_test).ravel()
+# Function to create a design matrix for polynomial terms up to a given degree
+def create_design_matrix(x, y, degree):
+    N = len(x)
+    num_terms = (degree + 1) * (degree + 2) // 2  # Number of polynomial terms up to the given degree
+    X = np.ones((N, num_terms))  # Initialize the design matrix
+    index = 1
+    for i in range(1, degree+1):
+        for j in range(i+1):
+            X[:, index] = (x ** (i-j)) * (y ** j)
+            index += 1
+    return X
 
-# Note: Expectations and variances taken w.r.t. different training
-# data sets, hence the axis=1. Subsequent means are taken across the test data
-# set in order to obtain a total value, but before this we have error/bias/variance
-# calculated per data point in the test set.
-# Note 2: The use of keepdims=True is important in the calculation of bias as this 
-# maintains the column vector form. Dropping this yields very unexpected results.
-error = np.mean( np.mean((y_test - y_pred)**2, axis=1, keepdims=True) )
-bias = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
-variance = np.mean( np.var(y_pred, axis=1, keepdims=True) )
-print('Error:', error)
-print('Bias^2:', bias)
-print('Var:', variance)
-print('{} >= {} + {} = {}'.format(error, bias, variance, bias+variance))
+# Implement Bootstrap Resampling
+def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
+    n,m = X.shape
+    mse_bootstrap = []
+    betas = np.empty((k, m))
 
-plt.plot(x[::5, :], y[::5, :], label='f(x)')
-plt.scatter(x_test, y_test, label='Data points')
-plt.scatter(x_test, np.mean(y_pred, axis=1), label='Pred')
+    for _ in range(num_bootstrap_samples):
+        # Generate random indices with replacement
+        bootstrap_indices = np.random.choice(n, size=n, replace=True)
+        oob_indices = np.setdiff1d(np.arange(n), bootstrap_indices)
+
+        # Bootstrap training data
+        X_train = X[bootstrap_indices]
+        z_train = z[bootstrap_indices]
+
+        
+        # Out-of-bag test data
+        X_test = X[oob_indices]
+        z_test = z[oob_indices]
+        ##Hva er out of the bag test??? Har aldri hørt om det, sikkert ikke relevant.lol
+        ##note to self, det er her x_test og z_test blir definert, lol
+
+        # Fit the Lasso model
+        lasso_model = Lasso(alpha=lambda_val, max_iter=10000)
+        lasso_model.fit(X_train, z_train)
+
+        # Predict and calculate MSE for the OOB samples
+        z_test_pred = lasso_model.predict(X_test)
+        mse_test = mean_squared_error(z_test, z_test_pred)
+        mse_bootstrap.append(mse_test)
+
+    return np.mean(mse_bootstrap)  # Return the average MSE across bootstrap samples
+
+# Parameters
+lambda_values = [0.1, 0.5, 1,1.5, 2, 2.5, 3, 3.5, 5, 10, 100, 1000]
+degree = 5  # Set degree to 5 for this plot
+num_bootstrap_samples = 100  # Number of bootstrap samples
+k = 5
+
+# Create design matrix for the current degree
+X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
+
+# Store MSE results for each lambda
+mse_bootstrap_scores = []
+
+
+for lambda_val in lambda_values:
+    # Perform bootstrap resampling and store MSE
+    mse_bootstrap = bootstrap_resampling(X_scaled, z_noisy_flat, num_bootstrap_samples, lambda_val)
+    mse_bootstrap_scores.append(mse_bootstrap)
+
+
+# Plot the results
+plt.figure(figsize=(8, 6))
+plt.plot(lambda_values, mse_bootstrap_scores, 'o-', color='tab:red', label='MSE Test (Bootstrap)')
+plt.xscale('log')
+plt.xlabel('Lambda')
+plt.ylabel('MSE')
+plt.title('Lasso Regression: MSE with Bootstrap Resampling')
 plt.legend()
+plt.grid(True)
 plt.show()
-
-
-
-def bootstrap(x,  y, function, folds):
-
-    return 0
-
-## har vi egne funksjoner som er mse og ols etc...? Eller må jeg lage det???
