@@ -68,6 +68,10 @@ def k_fold_cross_validation(X, z, k, lambda_val, model):
             identity_matrix = np.eye(X_train.shape[1])
             beta = inv(X_train_T @ X_train + lambda_val * identity_matrix) @ X_train_T @ z_train
             z_test_pred = X_test @ beta
+        elif model == "OLS":
+            X_train_T = X_train.T
+            beta = inv(X_train_T @ X_train) @ X_train_T @ z_train
+            z_test_pred = X_test @ beta
         else:
             raise Exception("does not recognize model")
     
@@ -86,7 +90,7 @@ def k_fold_cross_validation(X, z, k, lambda_val, model):
 lambda_values = [0.1, 0.5, 0.9, 1, 1.5, 2, 2.5, 5, 10, 100]
 degree = 5  # Set degree to 5 for this plot
 k = 10  # Number of folds for cross-validation
-model = "Ridge"
+model = "OLS"
 # Create design matrix for the current degree
 X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
 
@@ -105,7 +109,7 @@ plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='CV= %.f' % 
 plt.xscale('log')
 plt.xlabel('Lambda')
 plt.ylabel('MSE')
-plt.title('Ridge Regression with Cross-Validation')
+plt.title('%s with Cross-Validation' %model)
 plt.legend()
 plt.grid(True)
 plt.show()

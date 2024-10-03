@@ -78,6 +78,10 @@ def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
             identity_matrix = np.eye(X_train.shape[1])
             beta = inv(X_train_T @ X_train + lambda_val * identity_matrix) @ X_train_T @ z_train
             z_test_pred = X_test @ beta
+        elif model == "OLS":
+            X_train_T = X_train.T
+            beta = inv(X_train_T @ X_train) @ X_train_T @ z_train
+            z_test_pred = X_test @ beta
         else:
             raise Exception("does not recognize model")
         # Predict and calculate MSE for the OOB samples
@@ -91,7 +95,7 @@ lambda_values = [0.1, 0.5, 1,1.5, 2, 2.5, 3, 3.5, 5, 10, 100, 1000]
 degree = 5  # Set degree to 5 for this plot
 num_bootstrap_samples = 100  # Number of bootstrap samples
 k = 5
-model = "Lasso"
+model = "OLS"
 
 # Create design matrix for the current degree
 X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
