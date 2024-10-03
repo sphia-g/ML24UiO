@@ -3,6 +3,7 @@ from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+from numpy.linalg import inv
 
 # Define the Franke function
 def FrankeFunction(x, y):
@@ -65,16 +66,21 @@ def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
         
         # Out-of-bag test data
         X_test = X[oob_indices]
-        z_test = z[oob_indices]
-        ##Hva er out of the bag test??? Har aldri hørt om det, sikkert ikke relevant.lol
-        ##note to self, det er her x_test og z_test blir definert, lol
-
-        # Fit the Lasso model
-        lasso_model = Lasso(alpha=lambda_val, max_iter=10000)
-        lasso_model.fit(X_train, z_train)
-
+        z_test = z[oob_indices] ##hva????
+        
+        if model == "Lasso":
+            # Fit the Lasso model
+            lasso_model = Lasso(alpha=lambda_val, max_iter=10000)
+            lasso_model.fit(X_train, z_train)
+            z_test_pred = lasso_model.predict(X_test)
+        elif model == "Ridge":
+            X_train_T = X_train.T
+            identity_matrix = np.eye(X_train.shape[1])
+            beta = inv(X_train_T @ X_train + lambda_val * identity_matrix) @ X_train_T @ z_train
+            z_test_pred = X_test @ beta
+        else:
+            raise Exception("does not recognize model")
         # Predict and calculate MSE for the OOB samples
-        z_test_pred = lasso_model.predict(X_test)
         mse_test = mean_squared_error(z_test, z_test_pred)
         mse_bootstrap.append(mse_test)
 
@@ -85,6 +91,7 @@ lambda_values = [0.1, 0.5, 1,1.5, 2, 2.5, 3, 3.5, 5, 10, 100, 1000]
 degree = 5  # Set degree to 5 for this plot
 num_bootstrap_samples = 100  # Number of bootstrap samples
 k = 5
+model = "Lasso"
 
 # Create design matrix for the current degree
 X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
@@ -101,7 +108,7 @@ for lambda_val in lambda_values:
 
 # Plot the results
 plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_bootstrap_scores, 'o-', color='tab:red', label='MSE Test (Bootstrap)')
+plt.plot(lambda_values, mse_bootstrap_scores, 'o-', color='tab:red', label='%s' %model)
 plt.xscale('log')
 plt.xlabel('Lambda')
 plt.ylabel('MSE')
