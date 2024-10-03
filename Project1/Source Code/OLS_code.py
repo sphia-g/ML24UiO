@@ -1,3 +1,18 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from numpy.linalg import inv
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# Define the Franke function (as used before)
+def FrankeFunction(x, y):
+    term1 = 0.75 * np.exp(-(0.25 * (9*x - 2)**2) - 0.25 * ((9*y - 2)**2))
+    term2 = 0.75 * np.exp(-((9*x + 1)**2) / 49.0 - 0.1 * (9*y + 1))
+    term3 = 0.5 * np.exp(-(9*x - 7)**2 / 4.0 - 0.25 * ((9*y - 3)**2))
+    term4 = -0.2 * np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
+    return term1 + term2 + term3 + term4
+
 # Generate data points
 x = np.arange(0, 1, 0.01)
 y = np.arange(0, 1, 0.01)
@@ -33,6 +48,17 @@ x_test_scaled = scaler_x.transform(x_test)
 y_train_scaled = scaler_y.fit_transform(y_train)
 y_test_scaled = scaler_y.transform(y_test)
 
+# Function to create a design matrix for polynomial terms up to a given degree
+def create_design_matrix(x, y, degree):
+    N = len(x)
+    num_terms = (degree + 1) * (degree + 2) // 2  # Number of polynomial terms up to the given degree
+    X = np.ones((N, num_terms))  # Initialize the design matrix
+    index = 1
+    for i in range(1, degree+1):
+        for j in range(i+1):
+            X[:, index] = (x ** (i-j)) * (y ** j)
+            index += 1
+    return X
 
 # Lists to store MSE, R2 scores, and beta coefficients
 degrees = list(range(1, 6))  # Degrees from 1 to 5
@@ -70,4 +96,49 @@ for degree in degrees:
     
     # Store the beta coefficients
     betas.append(beta)
+
+# Convert the list of beta coefficients into an array for plotting
+betas = np.array(betas, dtype=object).flatten()
+
+# Plot the MSE and R2 as functions of the polynomial degree
+fig, ax1 = plt.subplots()
+
+# Plot MSE on the left y-axis
+ax1.set_xlabel('Polynomial Degree')
+ax1.set_ylabel('MSE', color='tab:red')
+ax1.plot(degrees, mse_train_scores, 'o-', color='tab:red', label='MSE Train')
+ax1.plot(degrees, mse_test_scores, 'x-', color='tab:orange', label='MSE Test')
+ax1.tick_params(axis='y', labelcolor='tab:red')
+
+# Create a second y-axis for R2
+ax2 = ax1.twinx()
+ax2.set_ylabel('R2 Score', color='tab:blue')
+ax2.plot(degrees, r2_train_scores, 'o-', color='tab:blue', label='R2 Train')
+ax2.plot(degrees, r2_test_scores, 'x-', color='tab:cyan', label='R2 Test')
+ax2.tick_params(axis='y', labelcolor='tab:blue')
+
+# Add a title and show the plot
+plt.title('MSE and R2 Scores as Functions of Polynomial Degree (Train vs Test)')
+ax1.legend(loc="upper left")
+ax2.legend(loc="upper right")
+plt.show()
+
+'''
+Plot the beta coefficients as the polynomial degree increases
+plt.figure(figsize=(10, 6))
+
+for i, beta_coeffs in enumerate(betas):
+    plt.plot(beta_coeffs, 'o-', label=f'Degree {i+1}')
+    print(beta_coeffs.shape)
+
+
+
+plt.xlabel('Beta Index')
+plt.ylabel('Beta Coefficient Value')
+plt.title('Beta Coefficients as Function of Polynomial Degree')
+plt.legend()
+plt.grid(True)
+plt.show()
+'''
+
 
