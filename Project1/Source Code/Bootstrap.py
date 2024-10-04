@@ -52,7 +52,6 @@ def create_design_matrix(x, y, degree):
 def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val, model):
     n,m = X.shape
     mse_bootstrap = []
-    betas = np.empty((k, m))
 
     for _ in range(num_bootstrap_samples):
         # Generate random indices with replacement
