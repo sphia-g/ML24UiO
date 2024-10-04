@@ -62,7 +62,6 @@ def create_design_matrix(x, y, degree):
 def k_fold_cross_validation(X, z, k, lambda_val, model):
     kf = KFold(n_splits=k, shuffle=True, random_state=42)
     mse_folds = []
-    r2_scores = []
 
     for train_index, test_index in kf.split(X):
         X_train, X_test = X[train_index], X[test_index]
