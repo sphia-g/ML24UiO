@@ -83,10 +83,6 @@ def k_fold_cross_validation(X, z, k, lambda_val, model):
             z_test_pred = X_test @ beta
         else:
             raise Exception("does not recognize model")
-    
-        ##r2_train = r2_score(z_train, z_train_pred)
-        r2_test = r2_score(z_test, z_test_pred)
-        r2_scores.append(r2_test)
 
         # Predict and calculate MSE for the test fold
       
