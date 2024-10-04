@@ -21,6 +21,19 @@ height, width = terrain1_array.shape[:2]
 # Create meshgrid for X and Y coordinates
 x, y = np.meshgrid(range(width), range(height))
 
+'''''
+# Downsample the data by selecting every 100th point
+downsample_factor = 100
+terrain1_downsampled = terrain1[::downsample_factor, ::downsample_factor]
+
+# Create meshgrid
+ysize, xsize = terrain1_downsampled.shape
+x = np.linspace(0, xsize - 1, xsize)
+y = np.linspace(0, ysize - 1, ysize)
+x, y = np.meshgrid(x, y)
+
+'''''
+
 # Flatten x and y to create a design matrix
 x_flat = x.flatten()
 y_flat = y.flatten()
