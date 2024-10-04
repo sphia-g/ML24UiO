@@ -1,15 +1,10 @@
 import numpy as np
-from sklearn.model_selection import KFold
 from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 from imageio import imread
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-
 
 # Show the terrain
 # Define the Franke function
@@ -59,17 +54,28 @@ def create_design_matrix(x, y, degree):
             index += 1
     return X
 
-# Implement k-fold cross-validation
-def k_fold_cross_validation(X, z, k, lambda_val, model):
-    kf = KFold(n_splits=k, shuffle=True, random_state=42)
-    mse_folds = []
-    r2_scores = []
+# Implement Bootstrap Resampling
+def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
+    n,m = X.shape
+    mse_bootstrap = []
+    betas = np.empty((k, m))
 
-    for train_index, test_index in kf.split(X):
-        X_train, X_test = X[train_index], X[test_index]
-        z_train, z_test = z[train_index], z[test_index] 
+    for _ in range(num_bootstrap_samples):
+        # Generate random indices with replacement
+        bootstrap_indices = np.random.choice(n, size=n, replace=True)
+        oob_indices = np.setdiff1d(np.arange(n), bootstrap_indices)
 
-        if model == "Lasso":        
+        # Bootstrap training data
+        X_train = X[bootstrap_indices]
+        z_train = z[bootstrap_indices]
+
+        
+        # Out-of-bag test data
+        X_test = X[oob_indices]
+        z_test = z[oob_indices] 
+        
+        if model == "Lasso":
+            # Fit the Lasso model
             lasso_model = Lasso(alpha=lambda_val, max_iter=10000)
             lasso_model.fit(X_train, z_train)
             z_test_pred = lasso_model.predict(X_test)
@@ -84,80 +90,39 @@ def k_fold_cross_validation(X, z, k, lambda_val, model):
             z_test_pred = X_test @ beta
         else:
             raise Exception("does not recognize model")
-    
-        ##r2_train = r2_score(z_train, z_train_pred)
-        r2_test = r2_score(z_test, z_test_pred)
-        r2_scores.append(r2_test)
-
-        # Predict and calculate MSE for the test fold
-      
+        # Predict and calculate MSE for the OOB samples
         mse_test = mean_squared_error(z_test, z_test_pred)
-        mse_folds.append(mse_test)
+        mse_bootstrap.append(mse_test)
 
-    return np.mean(mse_folds)  # Return the average MSE across folds
+    return np.mean(mse_bootstrap)  # Return the average MSE across bootstrap samples
 
 # Parameters
-lambda_values = [0.1, 0.5, 0.9, 1, 1.5, 2, 2.5, 5, 10, 100]
+lambda_values = [0.1, 0.5, 1,1.5, 2, 2.5, 3, 3.5, 5, 10, 100, 1000]
 degree = 5  # Set degree to 5 for this plot
-k = 5  # Number of folds for cross-validation
+num_bootstrap_samples = 100  # Number of bootstrap samples
+k = 5
 model = "OLS"
+
 # Create design matrix for the current degree
 X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
 
 # Store MSE results for each lambda
-mse_cv_scores = []
-mse_cv5_scores = []
+mse_bootstrap_scores = []
+
 
 for lambda_val in lambda_values:
-    # Perform k-fold cross-validation and store MSE
-    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
-    mse_cv_scores.append(mse_cv)
+    # Perform bootstrap resampling and store MSE
+    mse_bootstrap = bootstrap_resampling(X_scaled, z_noisy_flat, num_bootstrap_samples, lambda_val)
+    mse_bootstrap_scores.append(mse_bootstrap)
 
 
+# Plot the results
 plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='K= %.f' % k)
+plt.plot(lambda_values, mse_bootstrap_scores, 'o-', color='tab:red', label='%s' %model)
 plt.xscale('log')
 plt.xlabel('Lambda')
 plt.ylabel('MSE')
-plt.title('%s with Cross-Validation' %model)
-plt.legend()
-plt.grid(True)
-plt.show()
-
-model = "Lasso"
-# Store MSE results for each lambda
-mse_cv_scores = []
-
-for lambda_val in lambda_values:
-    # Perform k-fold cross-validation and store MSE
-    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
-    mse_cv_scores.append(mse_cv)
-
-plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='K= %.f' % k)
-plt.xscale('log')
-plt.xlabel('Lambda')
-plt.ylabel('MSE')
-plt.title('%s with Cross-Validation' %model)
-plt.legend()
-plt.grid(True)
-plt.show()
-
-model = "Ridge"
-# Store MSE results for each lambda
-mse_cv_scores = []
-
-for lambda_val in lambda_values:
-    # Perform k-fold cross-validation and store MSE
-    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
-    mse_cv_scores.append(mse_cv)
-
-plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='K= %.f' % k)
-plt.xscale('log')
-plt.xlabel('Lambda')
-plt.ylabel('MSE')
-plt.title('%s with Cross-Validation' %model)
+plt.title('Lasso Regression: MSE with Bootstrap Resampling')
 plt.legend()
 plt.grid(True)
 plt.show()
