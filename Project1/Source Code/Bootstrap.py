@@ -66,7 +66,7 @@ def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
         
         # Out-of-bag test data
         X_test = X[oob_indices]
-        z_test = z[oob_indices] ##hva????
+        z_test = z[oob_indices] 
         
         if model == "Lasso":
             # Fit the Lasso model
