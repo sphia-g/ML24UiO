@@ -49,7 +49,7 @@ def create_design_matrix(x, y, degree):
     return X
 
 # Implement Bootstrap Resampling
-def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
+def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val, model):
     n,m = X.shape
     mse_bootstrap = []
     betas = np.empty((k, m))
@@ -106,7 +106,7 @@ mse_bootstrap_scores = []
 
 for lambda_val in lambda_values:
     # Perform bootstrap resampling and store MSE
-    mse_bootstrap = bootstrap_resampling(X_scaled, z_noisy_flat, num_bootstrap_samples, lambda_val)
+    mse_bootstrap = bootstrap_resampling(X_scaled, z_noisy_flat, num_bootstrap_samples, lambda_val, model)
     mse_bootstrap_scores.append(mse_bootstrap)
 
 
