@@ -22,8 +22,8 @@ height, width = terrain1_array.shape[:2]
 x, y = np.meshgrid(range(width), range(height))
 
 '''''
-# Downsample the data by selecting every 100th point
-downsample_factor = 100
+# Downsample the data by selecting every 150th point
+downsample_factor = 150
 terrain1_downsampled = terrain1[::downsample_factor, ::downsample_factor]
 
 # Create meshgrid
