@@ -16,10 +16,14 @@ def FrankeFunction(x, y):
     term4 = -0.2 * np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
     return term1 + term2 + term3 + term4
 
-# Generate data points
-x = np.arange(0, 1, 0.01)
-y = np.arange(0, 1, 0.01)
-x, y = np.meshgrid(x, y)
+# Load the terrain
+terrain1 = imread('SRTM_data_Norway_1.tif')
+# Use data points from TIFF file
+terrain1_array = np.array(terrain1)
+# Get image dimensions
+height, width = terrain1_array.shape[:2]
+# Create meshgrid for X and Y coordinates
+x, y = np.meshgrid(range(width), range(height))
 
 # Flatten x and y to create a design matrix
 x_flat = x.flatten()
