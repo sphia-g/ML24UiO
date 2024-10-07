@@ -1,15 +1,12 @@
+# Updated bootstrap function to include standard deviation calculation
 import numpy as np
 from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
+import pandas as pd
 
-lambda_values = [0.1, 1, 10, 100, 1000]
-degree = 5 # Set degree to 5 for this plot
-num_bootstrap_samples = 50  # Number of bootstrap samples
-model = 'OLS' 
-degrees = list(range(1,6))
 
 # Define the Franke function
 def FrankeFunction(x, y):
@@ -54,9 +51,9 @@ def create_design_matrix(x, y, degree):
             index += 1
     return X
 
-# Implement Bootstrap Resampling
-def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val, model):
-    n,m = X.shape
+
+def bootstrap_resampling(X, z, num_bootstrap_samples, degree, model):
+    n, m = X.shape
     mse_bootstrap = []
 
     for _ in range(num_bootstrap_samples):
@@ -70,68 +67,62 @@ def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val, model):
 
         # Out-of-bag test data
         X_test = X[oob_indices]
-        z_test = z[oob_indices] 
-        
+        z_test = z[oob_indices]
+
         if model == "Lasso":
             # Fit the Lasso model
-            lasso_model = Lasso(alpha=lambda_val, max_iter=10000)
+            lasso_model = Lasso(0.1, max_iter=10000)
             lasso_model.fit(X_train, z_train)
             z_test_pred = lasso_model.predict(X_test)
         elif model == "Ridge":
             X_train_T = X_train.T
             identity_matrix = np.eye(X_train.shape[1])
-            beta = inv(X_train_T @ X_train + lambda_val * identity_matrix) @ X_train_T @ z_train
+            beta = inv(X_train_T @ X_train + degree * identity_matrix) @ X_train_T @ z_train
             z_test_pred = X_test @ beta
         elif model == "OLS":
             X_train_T = X_train.T
             beta = inv(X_train_T @ X_train) @ X_train_T @ z_train
-            z_train_pred = X_train @ beta
             z_test_pred = X_test @ beta
         else:
             raise Exception("does not recognize model")
-        # Predict and calculate MSE for the OOB samples
+
+        # Calculate MSE for the OOB samples
         mse_test = mean_squared_error(z_test, z_test_pred)
         mse_bootstrap.append(mse_test)
 
-    return np.mean(mse_bootstrap), np.std(mse_bootstrap)  # Return the average MSE across bootstrap samples
+    # Calculate the mean and standard deviation of MSE
+    mean_mse = np.mean(mse_bootstrap)
+    std_mse = np.std(mse_bootstrap)
 
-# Parameters
+    return mean_mse, std_mse
 
-X_resampled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
-mse_bootstrap_scores = []
 
-if model != "OLS":
-    for lambda_val in lambda_values:
-        mse_bootstrap = bootstrap_resampling(X_resampled, z_noisy_flat, num_bootstrap_samples, lambda_val, model)
-        mse_bootstrap_scores.append(mse_bootstrap)
-        # Plot the results
+# Define the polynomial degrees to test
+degrees = range(1, 6)  # Change as needed to test degrees from 1 to 10
+num_bootstrap_samples = 50  # Number of bootstrap samples
+model = "OLS"
+lambda_degree = 0.1
 
-if model == "OLS":
-    for d in degrees:
-        X_resampled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
-        mse_bootstrap = bootstrap_resampling(X_resampled, z_noisy_flat, num_bootstrap_samples, d, "OLS")
-        mse_bootstrap_scores.append(mse_bootstrap)
+# Store results in a list of dictionaries for easier DataFrame conversion
+results = []
 
-print(bootstrap_resampling(X_resampled, z_noisy_flat, num_bootstrap_samples, 1, "OLS" ))
+# Loop over the polynomial degrees
+for degree in degrees:
+    # Create the design matrix for the current degree
+    X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
+    
+    # Perform bootstrap resampling to get mean MSE and standard deviation for OLS
+    mean_mse, std_mse = bootstrap_resampling(X_scaled, z_noisy_flat, num_bootstrap_samples, 10, model)
+    
+    # Store the results in a dictionary
+    results.append({
+        "Degree": degree,
+        "Mean MSE": mean_mse,
+        "Standard Deviation": std_mse
+    })
 
-"""
-if model != "OLS":
-    plt.figure(figsize=(8, 6))
-    plt.plot(lambda_values, mse_bootstrap_scores, 'o-', color='tab:red', label='%s resampled' %model)
-    plt.xscale('log')
-    plt.xlabel('Lambda')
-    plt.ylabel('MSE')
-    plt.title('%s bootstrap with degree= %.f' %(model, degree))
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-"""
-if model == "OLS":
-    plt.figure(figsize=(8, 6))
-    plt.plot(degrees, mse_bootstrap_scores, 'o-', color='tab:red', label='%s resampled' %model)
-    plt.xlabel('Degrees')
-    plt.ylabel('MSE')
-    plt.title('%s bootstrap' %model)
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+# Convert the results to a pandas DataFrame for a table-like output
+results_df = pd.DataFrame(results)
+
+# Display the table
+print(results_df)
