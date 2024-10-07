@@ -82,9 +82,9 @@ def k_fold_cross_validation(X, z, k, lambda_val, model):
     return np.mean(mse_folds)  # Return the average MSE across folds
 
 # Parameters
-lambda_values = [0.1, 0.5, 0.9, 1, 1.5, 2, 2.5, 5, 10, 100]
+lambda_values = [0.1, 1, 10, 100, 1000]
 degree = 5  # Set degree to 5 for this plot
-k = 10  # Number of folds for cross-validation
+k = 100  # Number of folds for cross-validation
 model = "OLS"
 # Create design matrix for the current degree
 X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
@@ -100,7 +100,7 @@ for lambda_val in lambda_values:
 
 
 plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='CV= %.f' % k)
+plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='k= %.f' % k)
 plt.xscale('log')
 plt.xlabel('Lambda')
 plt.ylabel('MSE')
@@ -108,7 +108,7 @@ plt.title('%s with Cross-Validation' %model)
 plt.legend()
 plt.grid(True)
 plt.show()
-
+""" 
 model = "Lasso"
 # Create design matrix for the current degree
 X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
@@ -122,11 +122,36 @@ for lambda_val in lambda_values:
     mse_cv_scores.append(mse_cv)
 
 plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='MSE Test (CV)')
+plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='k= %.f' % k)
 plt.xscale('log')
 plt.xlabel('Lambda')
 plt.ylabel('MSE')
-plt.title('Lasso Regression with k-Fold Cross-Validation, k=10')
+plt.title('%s with Cross-Validation' %model)
 plt.legend()
 plt.grid(True)
 plt.show()
+
+model = "Ridge"
+# Create design matrix for the current degree
+X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
+
+# Store MSE results for each lambda
+mse_cv_scores = []
+mse_cv5_scores = []
+
+for lambda_val in lambda_values:
+    # Perform k-fold cross-validation and store MSE
+    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
+    mse_cv_scores.append(mse_cv)
+
+
+plt.figure(figsize=(8, 6))
+plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='k= %.f' % k)
+plt.xscale('log')
+plt.xlabel('Lambda')
+plt.ylabel('MSE')
+plt.title('%s with Cross-Validation' %model)
+plt.legend()
+plt.grid(True)
+plt.show()
+ """

@@ -97,9 +97,9 @@ def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val):
     return np.mean(mse_bootstrap)  # Return the average MSE across bootstrap samples
 
 # Parameters
-lambda_values = [0.1, 0.5, 1,1.5, 2, 2.5, 3, 3.5, 5, 10, 100, 1000]
+lambda_values = [10**-1, 10**0, 10**1, 10**2, 10**3]
 degree = 5  # Set degree to 5 for this plot
-num_bootstrap_samples = 100  # Number of bootstrap samples
+num_bootstrap_samples = 10  # Number of bootstrap samples
 k = 5
 model = "OLS"
 
