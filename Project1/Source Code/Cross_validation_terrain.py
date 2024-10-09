@@ -1,12 +1,11 @@
-# Updated bootstrap function to include standard deviation calculation
 import numpy as np
+from sklearn.model_selection import KFold
 from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
-from numpy.linalg import inv
 import pandas as pd
-
+from numpy.linalg import inv
 
 # Define the Franke function
 def FrankeFunction(x, y):
@@ -43,38 +42,29 @@ scaler_y = StandardScaler()
 x_scaled = scaler_x.fit_transform(x_flat.reshape(-1, 1))
 y_scaled = scaler_y.fit_transform(y_flat.reshape(-1, 1))
 
+
 # Function to create a design matrix for polynomial terms up to a given degree
 def create_design_matrix(x, y, degree):
     N = len(x)
     num_terms = (degree + 1) * (degree + 2) // 2  # Number of polynomial terms up to the given degree
     X = np.ones((N, num_terms))  # Initialize the design matrix
     index = 1
-    for i in range(1, degree+1):
-        for j in range(i+1):
-            X[:, index] = (x ** (i-j)) * (y ** j)
+    for i in range(1, degree + 1):
+        for j in range(i + 1):
+            X[:, index] = (x ** (i - j)) * (y ** j)
             index += 1
     return X
 
+# Implement k-fold cross-validation
+def k_fold_cross_validation(X, z, k, lambda_val, model):
+    kf = KFold(n_splits=k, shuffle=True, random_state=42)
+    mse_folds = []
 
-def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val, model):
-    n, m = X.shape
-    mse_bootstrap = []
+    for train_index, test_index in kf.split(X):
+        X_train, X_test = X[train_index], X[test_index]
+        z_train, z_test = z[train_index], z[test_index] 
 
-    for _ in range(num_bootstrap_samples):
-        # Generate random indices with replacement
-        bootstrap_indices = np.random.choice(n, size=n, replace=True)
-        oob_indices = np.setdiff1d(np.arange(n), bootstrap_indices)
-
-        # Bootstrap training data
-        X_train = X[bootstrap_indices]
-        z_train = z[bootstrap_indices]
-
-        # Out-of-bag test data
-        X_test = X[oob_indices]
-        z_test = z[oob_indices]
-
-        if model == "Lasso":
-            # Fit the Lasso model
+        if model == "Lasso":        
             lasso_model = Lasso(alpha=lambda_val, max_iter=10000)
             lasso_model.fit(X_train, z_train)
             z_test_pred = lasso_model.predict(X_test)
@@ -90,22 +80,17 @@ def bootstrap_resampling(X, z, num_bootstrap_samples, lambda_val, model):
         else:
             raise Exception("does not recognize model")
 
-        # Calculate MSE for the OOB samples
+        # Predict and calculate MSE for the test fold
         mse_test = mean_squared_error(z_test, z_test_pred)
-        mse_bootstrap.append(mse_test)
+        mse_folds.append(mse_test)
 
-    # Calculate the mean and standard deviation of MSE
-    mean_mse = np.mean(mse_bootstrap)
-    std_mse = np.std(mse_bootstrap)
-
-    return mean_mse, std_mse
-
-
+    return np.mean(mse_folds), np.std(mse_folds)  # Return the average MSE and its standard deviation
 
 # Define the polynomial degrees to test
 degrees = range(1, 6)  # Change as needed to test degrees from 1 to 10
-num_bootstrap_samples = 50  # Number of bootstrap samples
-model = "OLS"
+k = 5  # Number of bootstrap samples
+model = "Lasso"
+lambda_degree = 0.1
 
 # Store results in a list of dictionaries for easier DataFrame conversion
 results = []
@@ -116,7 +101,7 @@ for degree in degrees:
     X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
     
     # Perform bootstrap resampling to get mean MSE and standard deviation for OLS
-    mean_mse, std_mse = bootstrap_resampling(X_scaled, z_noisy_flat, num_bootstrap_samples, 0, model)
+    mean_mse, std_mse = k_fold_cross_validation(X_scaled, z_noisy_flat, k, 0.1, model)
     
     # Store the results in a dictionary
     results.append({
@@ -130,3 +115,4 @@ results_df = pd.DataFrame(results)
 
 # Display the table
 print(results_df)
+

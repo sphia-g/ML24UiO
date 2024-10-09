@@ -2,8 +2,9 @@ import numpy as np
 from sklearn.model_selection import KFold
 from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+import pandas as pd
 from numpy.linalg import inv
 
 # Define the Franke function
@@ -43,9 +44,9 @@ def create_design_matrix(x, y, degree):
     num_terms = (degree + 1) * (degree + 2) // 2  # Number of polynomial terms up to the given degree
     X = np.ones((N, num_terms))  # Initialize the design matrix
     index = 1
-    for i in range(1, degree+1):
-        for j in range(i+1):
-            X[:, index] = (x ** (i-j)) * (y ** j)
+    for i in range(1, degree + 1):
+        for j in range(i + 1):
+            X[:, index] = (x ** (i - j)) * (y ** j)
             index += 1
     return X
 
@@ -75,83 +76,38 @@ def k_fold_cross_validation(X, z, k, lambda_val, model):
             raise Exception("does not recognize model")
 
         # Predict and calculate MSE for the test fold
-      
         mse_test = mean_squared_error(z_test, z_test_pred)
         mse_folds.append(mse_test)
 
-    return np.mean(mse_folds)  # Return the average MSE across folds
+    return np.mean(mse_folds), np.std(mse_folds)  # Return the average MSE and its standard deviation
 
-# Parameters
-lambda_values = [0.1, 1, 10, 100, 1000]
-degree = 5  # Set degree to 5 for this plot
-k = 100  # Number of folds for cross-validation
-model = "OLS"
-# Create design matrix for the current degree
-X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
-
-# Store MSE results for each lambda
-mse_cv_scores = []
-mse_cv5_scores = []
-
-for lambda_val in lambda_values:
-    # Perform k-fold cross-validation and store MSE
-    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
-    mse_cv_scores.append(mse_cv)
-
-
-plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='k= %.f' % k)
-plt.xscale('log')
-plt.xlabel('Lambda')
-plt.ylabel('MSE')
-plt.title('%s with Cross-Validation' %model)
-plt.legend()
-plt.grid(True)
-plt.show()
-""" 
+# Define the polynomial degrees to test
+degrees = range(1, 6)  # Change as needed to test degrees from 1 to 10
+k = 10  # Number of bootstrap samples
 model = "Lasso"
-# Create design matrix for the current degree
-X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
+lambda_degree = 0.1
 
-# Store MSE results for each lambda
-mse_cv_scores = []
+# Store results in a list of dictionaries for easier DataFrame conversion
+results = []
 
-for lambda_val in lambda_values:
-    # Perform k-fold cross-validation and store MSE
-    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
-    mse_cv_scores.append(mse_cv)
+# Loop over the polynomial degrees
+for degree in degrees:
+    # Create the design matrix for the current degree
+    X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
+    
+    # Perform bootstrap resampling to get mean MSE and standard deviation for OLS
+    mean_mse, std_mse = k_fold_cross_validation(X_scaled, z_noisy_flat, k, 0.1, model)
+    
+    # Store the results in a dictionary
+    results.append({
+        "Degree": degree,
+        "Mean MSE": mean_mse,
+        "Standard Deviation": std_mse
+    })
 
-plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='k= %.f' % k)
-plt.xscale('log')
-plt.xlabel('Lambda')
-plt.ylabel('MSE')
-plt.title('%s with Cross-Validation' %model)
-plt.legend()
-plt.grid(True)
-plt.show()
+# Convert the results to a pandas DataFrame for a table-like output
+results_df = pd.DataFrame(results)
 
-model = "Ridge"
-# Create design matrix for the current degree
-X_scaled = create_design_matrix(x_scaled.flatten(), y_scaled.flatten(), degree)
+# Display the table
+print(results_df)
 
-# Store MSE results for each lambda
-mse_cv_scores = []
-mse_cv5_scores = []
-
-for lambda_val in lambda_values:
-    # Perform k-fold cross-validation and store MSE
-    mse_cv = k_fold_cross_validation(X_scaled, z_noisy_flat, k, lambda_val, model)
-    mse_cv_scores.append(mse_cv)
-
-
-plt.figure(figsize=(8, 6))
-plt.plot(lambda_values, mse_cv_scores, 'o-', color='tab:red', label='k= %.f' % k)
-plt.xscale('log')
-plt.xlabel('Lambda')
-plt.ylabel('MSE')
-plt.title('%s with Cross-Validation' %model)
-plt.legend()
-plt.grid(True)
-plt.show()
- """
