@@ -11,10 +11,13 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, m
     n = len(X)
     G = np.zeros_like(beta)
     velocity = np.zeros_like(beta)
-    t = 0
+    t = 0 ## only for ADAM
+
     #if approx != None and approx is adam:
     #    momentum_gamma = 0.999
+
     for _ in range(n_iterations):
+        t+=1 ## only for ADAM
         gradient = (2.0 / n) * X.T @ (X @ beta - y)
         if approx is not None:
             G, beta = approx(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t)
@@ -24,6 +27,37 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, m
         else:
             beta -= learning_rate * gradient
 
+    return beta
+
+# if not momentum, let batchsize be the default 1
+def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, momentum_gamma=0.9, epsilon=1e-8, momentum=False, batch_size=1, approx=None):
+    n = len(X)
+    velocity = np.zeros_like(beta)  # Initialize velocity (same shape as beta)  
+    G = np.zeros_like(beta)  # Initialize sum of squared gradients for Adagrad  
+    t=0 ##trenger kanskje for ADAM...?
+
+    for _ in range(n_iterations):
+        if approx is not None or momentum: 
+            indices = np.random.permutation(n)
+            X = X[indices]
+            y = y[indices]
+
+        for i in range(0, n, batch_size):
+            t+=1
+            Xi = X[i:i+batch_size]
+            yi = y[i:i+batch_size]
+
+            if approx is not None or momentum is not None:
+                gradient = (2.0 / batch_size) * Xi.T @ (Xi @ beta - yi) 
+
+            if approx is not None:
+                G, beta = approx(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t)
+            elif momentum:
+                velocity = gamma * velocity + learning_rate * gradient
+                beta -= velocity
+            else:
+                gradient = 2.0 * Xi.T @ (Xi @ beta - yi)
+                beta -= learning_rate * gradient
     return beta
 
 def adagrad(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t):
@@ -48,12 +82,11 @@ def rmsprop(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, mome
     return G, beta
 
 def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t): 
-    t = t+1
     beta1 = gamma ## is this good code??
     beta2 = momentum_gamma
     m = G
     if momentum:
-        return 0
+        return 0 ## not implemented. ...
     else:
         # Update biased first moment estimate
         m = beta1 * m + (1 - beta1) * gradient
@@ -70,15 +103,7 @@ def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentu
 
 ## plain_gradient_descent() må prøve å kjøre den også, lol...
 
-def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations):
-    n = len(X)
-    for iter in range(n_iterations):
-        for i in range(n):
-            xi = X[i:i+1]
-            yi = y[i:i+1]
-            gradients = 2.0 * xi.T @ (xi @ beta - yi)
-            beta -= learning_rate * gradients
-    return beta
+
 """
 My reasoning for not placing stochastic and plain in the same function: 
 because of the nested for-loop in stochastic
