@@ -18,7 +18,9 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, m
 
     for _ in range(n_iterations):
         t+=1 ## only for ADAM
+
         gradient = (2.0 / n) * X.T @ (X @ beta - y)
+
         if approx is not None:
             G, beta = approx(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t)
         elif momentum:
@@ -47,7 +49,7 @@ def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0
             Xi = X[i:i+batch_size]
             yi = y[i:i+batch_size]
 
-            if approx is not None or momentum is not None:
+            if approx is not None or momentum:
                 gradient = (2.0 / batch_size) * Xi.T @ (Xi @ beta - yi) 
 
             if approx is not None:
@@ -65,20 +67,22 @@ def adagrad(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, mome
     if momentum:    
         adaptive_lr = learning_rate / (np.sqrt(G + epsilon))
         velocity = gamma * velocity + adaptive_lr * gradient
-        beta = beta -velocity
+        beta -= velocity
     else:
-        beta = beta - (learning_rate / (np.sqrt(G + epsilon))) * gradient
+        beta -= (learning_rate / (np.sqrt(G + epsilon))) * gradient
     return G, beta
 
 
 def rmsprop(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t):
+    
     G = gamma * G + (1 - gamma) * gradient**2
+
     if momentum:
         adaptive_lr = learning_rate / (np.sqrt(G + epsilon))
         velocity = momentum_gamma * velocity + adaptive_lr * gradient
-        beta = beta - velocity
+        beta -= velocity
     else:
-        beta = beta - (learning_rate / (np.sqrt(G + epsilon))) * gradient
+        beta -= (learning_rate / (np.sqrt(G + epsilon))) * gradient
     return G, beta
 
 def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t): 
@@ -96,7 +100,7 @@ def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentu
         # Compute bias-corrected first and second moment estimates
         m_hat = m / (1 - beta1**t)
         v_hat = velocity / (1 - beta2**t)
-        beta = beta - learning_rate * m_hat / (np.sqrt(v_hat) + epsilon)
+        beta -= learning_rate * m_hat / (np.sqrt(v_hat) + epsilon)
 
     return m, beta
 
