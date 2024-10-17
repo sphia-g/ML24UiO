@@ -28,7 +28,7 @@ epsilon = 1e-8
 gamma = 0.9
 momentum_gamma = 0.9
 
-"""
+
 beta_gd = stochastic_gradient_descent(X, y, initial_beta, learning_rate, n_iterations)
 beta_adagrad = stochastic_gradient_descent(X, y, initial_beta, learning_rate, n_iterations, approx=adagrad)
 beta_rmsprop =stochastic_gradient_descent(X, y, initial_beta, learning_rate, n_iterations, approx=rmsprop)
@@ -56,31 +56,8 @@ print(f"Beta (Adam): {beta_adam}")
 print(f"Sophia's beta (Adam): {beta_adam_S}")
 
 
-# Optionally, visualize the results:
-plt.scatter(X[:, 1], y, alpha=0.5, label='Data')
-
-x_line = np.linspace(0, 1, 100)
-
-# Equation: y = intercept + slope * x
-plt.plot(x_line, 1 + 3 * x_line, 'g--', label='True Line')  # True beta
-plt.plot(x_line, beta_gd[0] + beta_gd[1] * x_line, 'r-', label='GD Line')
-plt.plot(x_line, beta_adagrad[0] + beta_adagrad[1] * x_line, 'b-', label='AdaGrad Line')
-plt.plot(x_line, beta_rmsprop[0] + beta_rmsprop[1] * x_line, 'c-', label='RMSProp Line')
-plt.plot(x_line, beta_adam[0] + beta_adam[1] * x_line, 'm-', label='Adam Line')
-
-plt.xlabel('x')
-plt.ylabel('y')
-plt.legend()
-plt.show()
 
 
-##plt.plot(x_line, beta_adagrad[0] + beta_adagrad[1] * x_line, 'b-', label='AdaGrad Line')
-plt.plot(x_line, beta_adagrad_momentum[0] + beta_adagrad_momentum[1] * x_line, '-', label='AdaGrad Line momentum')
-
-plt.xlabel('x')
-plt.ylabel('y')
-plt.legend()
-plt.show()
 """
 
 # Run the gradient descent
@@ -138,3 +115,4 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.legend()
 plt.show()
+"""
