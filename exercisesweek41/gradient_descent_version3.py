@@ -6,7 +6,7 @@ import numpy as np
 # approximations = ADAM ADAgrad RMS
 
 ## currently it's plain gradient descent with / wo momentum and w/wo approx
-def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, momentum_gamma=0.9, epsilon=1e-8, momentum=False, approx = None):
+def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, momentum_gamma=0.9, epsilon=1e-8, momentum=False, approx = None): ## maybe change momentum_gamma to 0.999
 
     n = len(X)
     G = np.zeros_like(beta)
