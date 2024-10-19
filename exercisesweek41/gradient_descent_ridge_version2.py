@@ -1,3 +1,4 @@
+import numpy as np
 def plain_gradient_descent_ridge(X, y, beta, learning_rate, n_iterations, lmbda):
     """
     Performs plain gradient descent for Ridge Regression.
