@@ -12,14 +12,10 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, model=None, 
     velocity = np.zeros_like(beta)
     t = 0 ## only for ADAM
 
-    #if approx != None and approx is adam:
-    #    momentum_gamma = 0.999
-
     for _ in range(n_iterations):
         t+=1 ## only for ADAM
 
         gradient = model(n, X, y, beta, lmbda)
-        ##gradient = (2.0 / n) * X.T @ (X @ beta - y)
 
         if approx is not None:
             G, beta = approx(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t)
@@ -35,7 +31,7 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, model=None, 
 def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, model=None, approx=None, momentum=False, gamma=0.9, momentum_gamma=0.999, epsilon=1e-8, batch_size=1, lmbda = 0.001):
     n = len(X)
     velocity = np.zeros_like(beta)  # Initialize velocity (same shape as beta)  
-    G = np.zeros_like(beta)  # Initialize sum of squared gradients for Adagrad  
+    G = np.zeros_like(beta)  # Initialize sum of squared gradients for Adagrad/rmsprop
     t=0 ##only for ADAM
 
     for _ in range(n_iterations):
@@ -74,9 +70,7 @@ def adagrad(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, mome
 
 
 def rmsprop(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t):
-    
     G = gamma * G + (1 - gamma) * gradient**2
-
     if momentum:
         adaptive_lr = learning_rate / (np.sqrt(G + epsilon))
         velocity = momentum_gamma * velocity + adaptive_lr * gradient
@@ -88,17 +82,14 @@ def rmsprop(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, mome
 def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t): 
     beta1 = gamma 
     beta2 = momentum_gamma
-    m = G
 
-    m = beta1 * m + (1 - beta1) * gradient
+    G = beta1 * G + (1 - beta1) * gradient
     velocity = beta2 * velocity + (1 - beta2) * (gradient ** 2)
-
-        # Compute bias-corrected first and second moment estimates
-    m_hat = m / (1 - beta1**t)
+    G_hat = G / (1 - beta1**t)
     v_hat = velocity / (1 - beta2**t)
-    beta -= learning_rate * m_hat / (np.sqrt(v_hat) + epsilon)
+    beta -= learning_rate * G_hat / (np.sqrt(v_hat) + epsilon)
 
-    return m, beta
+    return G, beta
 
 def ols(n, X, y, beta):
     gradient = (2.0 / n)* X.T @ (X @ beta - y)
