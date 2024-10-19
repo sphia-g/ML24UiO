@@ -34,8 +34,11 @@ model = gd.ridge
 modelname = "ridge"
 approx_name = "adam"
 
-beta_gd = gd.plain_gradient_descent(X,y,initial_beta, learning_rate, n_iterations, model=model, approx=approx, momentum=momentum)
-beta_gdS = gds.adam_momentum_gradient_descent_ridge(X, y, initial_beta, learning_rate, n_iterations, lmbda)
+beta_gd = gd.stochastic_gradient_descent(X,y,initial_beta, learning_rate, n_iterations, model=model, approx=approx, momentum=momentum)
+#gd.plain_gradient_descent(X,y,initial_beta, learning_rate, n_iterations, model=model, approx=approx, momentum=momentum)
+beta_gdS = gds.adam_stochastic_gradient_descent_momentum_ridge(X,y,initial_beta,learning_rate,n_iterations,lmbda)
+#gds.stochastic_gradient_descent_momentum_ridge(X,y,initial_beta, learning_rate, n_iterations, lmbda)
+#gds.adam_momentum_gradient_descent_ridge(X, y, initial_beta, learning_rate, n_iterations, lmbda)
 
 
 print(f"True beta: {true_beta}")

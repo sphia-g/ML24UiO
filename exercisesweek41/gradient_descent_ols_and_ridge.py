@@ -86,13 +86,11 @@ def rmsprop(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, mome
     return G, beta
 
 def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t): 
-    ## no momentum implementation atm
-    beta1 = gamma ## is this good code??
+    beta1 = gamma 
     beta2 = momentum_gamma
     m = G
-        # Update biased first moment estimate
+
     m = beta1 * m + (1 - beta1) * gradient
-        # Update biased second moment estimate
     velocity = beta2 * velocity + (1 - beta2) * (gradient ** 2)
 
         # Compute bias-corrected first and second moment estimates
@@ -108,9 +106,7 @@ def ols(n, X, y, beta):
 
 def ridge(n, X, y, beta, lmbda):
     gradient = (2.0 / n) * X.T @ (X @ beta - y) + 2 * lmbda * beta
-
     return gradient
-
 
 
 """
