@@ -1,12 +1,11 @@
 import numpy as np
 
-## ols and ridge
-## plain and gradient
-# with / wo momentum
+# Gradient descent : plain and gradient
+# regression models : ols and ridge
+# with and with out momentum
 # approximations = ADAM ADAgrad RMS
 
-## currently it's plain gradient descent with / wo momentum and w/wo approx
-def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, momentum_gamma=0.9, epsilon=1e-8, momentum=False, approx = None):
+def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, model=None, approx = None, momentum=False, gamma=0.9, momentum_gamma=0.999, epsilon=1e-8, lmbda=0.001):
 
     n = len(X)
     G = np.zeros_like(beta)
@@ -19,7 +18,8 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, m
     for _ in range(n_iterations):
         t+=1 ## only for ADAM
 
-        gradient = (2.0 / n) * X.T @ (X @ beta - y)
+        gradient = model(n, X, y, beta, lmbda)
+        ##gradient = (2.0 / n) * X.T @ (X @ beta - y)
 
         if approx is not None:
             G, beta = approx(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t)
@@ -32,11 +32,11 @@ def plain_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, m
     return beta
 
 # if not momentum, let batchsize be the default 1
-def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0.9, momentum_gamma=0.9, epsilon=1e-8, momentum=False, batch_size=1, approx=None):
+def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, model=None, approx=None, momentum=False, gamma=0.9, momentum_gamma=0.999, epsilon=1e-8, batch_size=1, lmbda = 0.001):
     n = len(X)
     velocity = np.zeros_like(beta)  # Initialize velocity (same shape as beta)  
     G = np.zeros_like(beta)  # Initialize sum of squared gradients for Adagrad  
-    t=0 ##trenger kanskje for ADAM...?
+    t=0 ##only for ADAM
 
     for _ in range(n_iterations):
         if approx is not None or momentum: 
@@ -49,8 +49,8 @@ def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0
             Xi = X[i:i+batch_size]
             yi = y[i:i+batch_size]
 
-            if approx is not None or momentum:
-                gradient = (2.0 / batch_size) * Xi.T @ (Xi @ beta - yi) 
+            gradient = model(batch_size, Xi, yi, beta, lmbda)
+                ##gradient = (2.0 / batch_size) * Xi.T @ (Xi @ beta - yi) 
 
             if approx is not None:
                 G, beta = approx(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t)
@@ -58,7 +58,7 @@ def stochastic_gradient_descent(X, y, beta, learning_rate, n_iterations, gamma=0
                 velocity = gamma * velocity + learning_rate * gradient
                 beta -= velocity
             else:
-                gradient = 2.0 * Xi.T @ (Xi @ beta - yi)
+                #gradient = 2.0 * Xi.T @ (Xi @ beta - yi)
                 beta -= learning_rate * gradient
     return beta
 
@@ -86,26 +86,31 @@ def rmsprop(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, mome
     return G, beta
 
 def adam(G, momentum, velocity, gradient, learning_rate, epsilon, gamma, momentum_gamma, beta, t): 
+    ## no momentum implementation atm
     beta1 = gamma ## is this good code??
     beta2 = momentum_gamma
     m = G
-    if momentum:
-        return 0 ## not implemented. ...
-    else:
         # Update biased first moment estimate
-        m = beta1 * m + (1 - beta1) * gradient
+    m = beta1 * m + (1 - beta1) * gradient
         # Update biased second moment estimate
-        velocity = beta2 * velocity + (1 - beta2) * (gradient ** 2)
+    velocity = beta2 * velocity + (1 - beta2) * (gradient ** 2)
 
         # Compute bias-corrected first and second moment estimates
-        m_hat = m / (1 - beta1**t)
-        v_hat = velocity / (1 - beta2**t)
-        beta -= learning_rate * m_hat / (np.sqrt(v_hat) + epsilon)
+    m_hat = m / (1 - beta1**t)
+    v_hat = velocity / (1 - beta2**t)
+    beta -= learning_rate * m_hat / (np.sqrt(v_hat) + epsilon)
 
     return m, beta
 
+def ols(n, X, y, beta):
+    gradient = (2.0 / n)* X.T @ (X @ beta - y)
+    return gradient
 
-## plain_gradient_descent() må prøve å kjøre den også, lol...
+def ridge(n, X, y, beta, lmbda):
+    gradient = (2.0 / n) * X.T @ (X @ beta - y) + 2 * lmbda * beta
+
+    return gradient
+
 
 
 """
@@ -113,16 +118,3 @@ My reasoning for not placing stochastic and plain in the same function:
 because of the nested for-loop in stochastic
 (would make momentum etc.. very difficult and messy)
 """
-
-
-## note to self: kanskje definere funksjoner ADAGRAD, ADAM, RMS_prop
-
-
-
-
-
-## note to note to self: les opp på adagrad etc.. og prøv å skriv din egen kode til det...
-## kanskje det genuint ikke finnes så mange bedre løsninger ... :///
-
-
-## :// vanskelig ... :(
