@@ -143,6 +143,30 @@ def feed_forward_saver_batch(inputs, layers, activation_funcs):
 
     return layer_inputs, zs, a
 
+
+# Backpropagation function
+def backpropagation_batch(inputs, layers, activation_funcs, target, activation_ders, cost_der=mse_der):
+    layer_inputs, zs, predict = feed_forward_saver_batch(inputs, layers, activation_funcs)
+    layer_grads = [() for layer in layers]
+    
+    for i in reversed(range(len(layers))):
+        layer_input, z, activation_der = layer_inputs[i], zs[i], activation_ders[i]
+
+        if i == len(layers) - 1:
+            dC_da = cost_der(predict, target)
+        else:
+            (W, b) = layers[i + 1]
+            dC_da = dC_dz @ W.T
+
+        dC_dz = dC_da * activation_der(z)
+        dC_dW = layer_input.T @ dC_dz
+        dC_db = np.sum(dC_dz, axis=0)
+
+        layer_grads[i] = (dC_dW, dC_db)
+
+    return layer_grads
+
+"""
 def backpropagation_batch(
     inputs, layers, activation_funcs, target, activation_ders, cost_der=mse_der
 ):
@@ -175,4 +199,4 @@ def backpropagation_batch(
         layer_grads[i] = (dC_dW, dC_db)
 
     return layer_grads
-
+"""
