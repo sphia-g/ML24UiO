@@ -27,7 +27,6 @@ def feed_forward_one_layer(W, b, x):
     a = sigmoid(z)
     return a
 
-
 def cost_one_layer(W, b, x, target):
     predict = feed_forward_one_layer(W, b, x)
     return mse(predict, target)
