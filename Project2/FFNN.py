@@ -18,6 +18,12 @@ def ReLU_der(z):
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
+def softmax(z):
+    """Compute softmax values for each set of scores in the rows of the matrix z.
+    Used with batched input data."""
+    e_z = np.exp(z - np.max(z, axis=0))
+    return e_z / np.sum(e_z, axis=1)[:, np.newaxis]
+
 
 def mse(predict, target):
     return np.mean((predict - target) ** 2)
