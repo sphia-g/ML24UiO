@@ -10,28 +10,29 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt 
 
 np.random.seed(666) #random seed to ensure reproducibility
+
 # Load and preprocess the Wisconsin Breast Cancer dataset
 data = datasets.load_breast_cancer()
 X = data.data
 y = data.target
 y = y.reshape(-1, 1)
 
+# Standardize the features
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
+# Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=2024) 
 
 input_size = X_train.shape[1]
-output_layer = [1]
-hidden_layers = [10, 10, 10]  
+output_layer = [1] # the output layer
+hidden_layers = [10, 10, 10] # a list of hidden layers
 layers = fn.create_layers_batch(input_size, hidden_layers+output_layer)
 activation_funcs = [fn.ReLU, fn.sigmoid, fn.ReLU, fn.sigmoid]
 activation_ders = [fn.ReLU_der, fn.sigmoid_der, fn.ReLU_der, fn.sigmoid_der]
-# Hyperparameters
+# Hyperparameters:
 learning_rate = 0.01
 epochs = 1000
-
-
 
 # Training loop
 for epoch in range(epochs):
@@ -49,7 +50,7 @@ for epoch in range(epochs):
 # Evaluate the model
 prediction = fn.feed_forward_batch(X_test, layers, activation_funcs)
 prediction = np.round(prediction) 
-accuracy = accuracy_score(y_test, prediction) ## prediction is 1 or 0
+accuracy = accuracy_score(y_test, prediction) 
 print(f"Accuracy on test set: {accuracy}")
 
 
