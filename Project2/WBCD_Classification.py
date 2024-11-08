@@ -31,7 +31,7 @@ layers = fn.create_layers_batch(input_size, hidden_layers+output_layer)
 activation_funcs = [fn.ReLU, fn.sigmoid, fn.ReLU, fn.sigmoid]
 activation_ders = [fn.ReLU_der, fn.sigmoid_der, fn.ReLU_der, fn.sigmoid_der]
 # Hyperparameters:
-learning_rate = 0.01
+learning_rate = 0.1
 epochs = 1000
 
 # Training loop
