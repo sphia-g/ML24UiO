@@ -91,15 +91,3 @@ def ols_autograd(n, X, y, beta):
 def ridge_autograd(n, X, y, beta, lmbda):
     gradient =... ## some autograd function
     return gradient
-
-""""
-def ols_autograd(n, X, y, beta):
-    
-    gradient = ag.grad()
-    ... ##some autograd function
-    return gradient
-
-def ridge_autograd(n, X, y, beta, lmbda):
-    gradient =... ## some autograd function
-    return gradient
-"""
