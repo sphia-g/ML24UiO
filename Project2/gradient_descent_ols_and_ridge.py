@@ -92,7 +92,7 @@ def ridge_autograd(n, X, y, beta, lmbda):
     gradient =... ## some autograd function
     return gradient
 
-
+""""
 def ols_autograd(n, X, y, beta):
     
     gradient = ag.grad()
@@ -102,11 +102,4 @@ def ols_autograd(n, X, y, beta):
 def ridge_autograd(n, X, y, beta, lmbda):
     gradient =... ## some autograd function
     return gradient
-
-"""
-My reasoning for not placing stochastic and plain in the same function: 
-because of the nested for-loop in stochastic
-(would make momentum etc.. very difficult and messy)
-
-check that autograd works ...
 """
