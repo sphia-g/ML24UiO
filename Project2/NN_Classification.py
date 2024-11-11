@@ -5,7 +5,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 import FFNN as fn
-import random
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt 
 
@@ -60,10 +59,8 @@ disp.plot(cmap='Blues')
 plt.title("Confusion Matrix with lr: %s, number of epochs: %s, " %(learning_rate, epochs))
 plt.show()
 
-
-#print("ytest: ", y_test)
-#print("prediction: ", prediction)
-##confusion matrix:
+"""
+##confusion matrix alternative code:
 falseP = 0
 trueP = 0
 falseN = 0
@@ -90,3 +87,4 @@ print("True benign: ", trueP)
 print("False malignant: ", falseN )
 print("True malignant: ", trueN)
 print("other: ", other)
+"""
