@@ -60,7 +60,7 @@ plt.title("Confusion Matrix with lr: %s, number of epochs: %s, " %(learning_rate
 plt.show()
 
 """
-##confusion matrix alternative code:
+#alternative code for confusion matrix (will print in terminal instead of a pop up window):
 falseP = 0
 trueP = 0
 falseN = 0
