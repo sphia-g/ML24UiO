@@ -9,14 +9,22 @@ from sklearn.metrics import accuracy_score
 def ReLU(z):
     return np.where(z > 0, z, 0)
 
+def leakyReLU(z):
+    return np.where(z>0, z, 0.001*z)
+
+def leakyReLU_der(z):
+    return np.where(z>0, 1, 0.001)
 
 # Derivative of the ReLU function
 def ReLU_der(z):
     return np.where(z > 0, 1, 0)
 
-
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
+
+def sigmoid_der(z):
+    da_dz = sigmoid(z) * (1 - sigmoid(z))
+    return da_dz
 
 def softmax(z):
     """Compute softmax values for each set of scores in the rows of the matrix z.
@@ -28,6 +36,10 @@ def softmax(z):
 def mse(predict, target):
     return np.mean((predict - target) ** 2)
 
+def mse_der(predict, target):
+    dC_da = 2/len(target) * (predict - target)
+    return dC_da
+
 def feed_forward_one_layer(W, b, x):
     z = W @ x + b
     a = sigmoid(z)
@@ -37,13 +49,6 @@ def cost_one_layer(W, b, x, target):
     predict = feed_forward_one_layer(W, b, x)
     return mse(predict, target)
 
-def mse_der(predict, target):
-    dC_da = 2/len(target) * (predict - target)
-    return dC_da
-
-def sigmoid_der(z):
-    da_dz = sigmoid(z) * (1 - sigmoid(z))
-    return da_dz
 
 def create_layers(network_input_size, layer_output_sizes):
     layers = []
