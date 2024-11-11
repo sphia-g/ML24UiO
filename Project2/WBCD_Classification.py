@@ -26,12 +26,12 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 input_size = X_train.shape[1]
 output_layer = [1] # the output layer
-hidden_layers = [10, 10, 10] # a list of hidden layers
+hidden_layers = [20, 20] # a list of hidden layers
 layers = fn.create_layers_batch(input_size, hidden_layers+output_layer)
-activation_funcs = [fn.ReLU, fn.sigmoid, fn.ReLU, fn.sigmoid]
-activation_ders = [fn.ReLU_der, fn.sigmoid_der, fn.ReLU_der, fn.sigmoid_der]
+activation_funcs = [fn.ReLU, fn.ReLU, fn.sigmoid]
+activation_ders = [fn.ReLU_der, fn.ReLU_der, fn.sigmoid_der]
 # Hyperparameters:
-learning_rate = 0.1
+learning_rate = 0.4
 epochs = 1000
 
 # Training loop
