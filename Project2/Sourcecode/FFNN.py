@@ -10,7 +10,7 @@ def ReLU(z):
     return np.where(z > 0, z, 0)
 
 def leakyReLU(z):
-    return np.where(z>0, z, 0.001*z)
+    return np.where(z > 0, z, 0.001*z)
 
 def leakyReLU_der(z):
     return np.where(z>0, 1, 0.001)
